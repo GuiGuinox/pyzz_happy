@@ -8,7 +8,7 @@
 
   <% include ../partials/nav.ejs %>
 
-<div class="jumbotron text-center">
+<!-- <div class="jumbotron text-center">
   <div class="container">
     <a href="/" class="lang-logo">
       <img src="/lang-logo.png">
@@ -46,10 +46,20 @@
       </ul>
     </div>
   </div> <!-- row -->
-   <div class="alert alert-info text-center" role="alert">
+   <!-- <div class="alert alert-info text-center" role="alert">
     Please do work through the Getting Started guide, even if you do know how to build such an application.  The guide covers the basics of working with Heroku, and will familiarize you with all the concepts you need in order to build and deploy your own apps.
   </div>
-</div>
+</div> -->
+
+<% for(var i=0; i< pizzas.length; i++ ){ %>
+  <div>
+  </div>
+
+  <form action="/doOrder" method="post">
+    <input type="hidden" name="idPizza" id="idPizza" value="<%= pizzas[i].id%>"></input>
+    <input type="submit" value="<%= pizzas[i].name%>"></input>
+</form>
+<% } %>
 
 
 </body>
