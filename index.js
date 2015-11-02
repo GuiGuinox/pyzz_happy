@@ -3,6 +3,7 @@ var request = require('request');
 var bodyParser = require('body-parser');
 var redis = require('redis');
 var client = redis.createClient();
+// var client = redis.createClient(port, 6379);
 var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));

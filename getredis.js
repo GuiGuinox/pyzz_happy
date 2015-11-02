@@ -1,5 +1,6 @@
 var redis = require('redis');
 var client = redis.createClient();
+// var client = redis.createClient(port, 6379);
 var request = require('request');
 
 // if you'd like to select database 3, instead of 0 (default), call
