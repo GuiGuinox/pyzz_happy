@@ -1,6 +1,8 @@
 var express = require('express');
 var request = require('request');
 var bodyParser = require('body-parser');
+var redis = require('redis');
+var client = redis.createClient();
 var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
@@ -13,18 +15,25 @@ app.use(express.static(__dirname + '/public'));
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
+client.on('error', function(err) {
+  console.log('Error ' + err);
+});
+
 app.get('/', function(req, resp) {
-  console.log('toto');
+
   request.get({url:'http://pizzapi.herokuapp.com/pizzas', timeout:4000}, function(error, response, body) {
-    console.log('test');
+
     if (error) {
       if (error.code === 'ETIMEDOUT') {
-        console.log('haha')
-        resp.render('pages/error');
+        client.get('pizzas', function(err, reply) {
+          console.log(reply);
+          pizzas = JSON.parse(reply);
+          console.log(pizzas);
+          resp.render('pages/index', {pizzas: pizzas});
+        });
       }
     }
 
-    console.log('piti');
     if (!error && response.statusCode == 200) {
       var pizzas = JSON.parse(body);
       console.log(pizzas)
