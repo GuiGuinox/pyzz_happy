@@ -14,8 +14,17 @@ app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
 
 app.get('/', function(req, resp) {
-  request('http://pizzapi.herokuapp.com/pizzas', function(error, response, body) {
+  console.log('toto');
+  request.get({url:'http://pizzapi.herokuapp.com/pizzas', timeout:4000}, function(error, response, body) {
+    console.log('test');
+    if (error) {
+      if (error.code === 'ETIMEDOUT') {
+        console.log('haha')
+        resp.render('pages/error');
+      }
+    }
 
+    console.log('piti');
     if (!error && response.statusCode == 200) {
       var pizzas = JSON.parse(body);
       console.log(pizzas)
@@ -29,7 +38,7 @@ app.post('/doOrder', function(req, resp) {
   var idval = req.body.idPizza;
   console.log(idval);
 
-  request.post('http://pizzapi.herokuapp.com/orders', JSON.stringify({id: idval}), function(error, response, body) {
+  request.post({url: 'http://pizzapi.herokuapp.com/orders', timeout:4000}, JSON.stringify({id: idval}), function(error, response, body) {
     if (!error && response.statusCode == 200) {
       console.log('You did it');
       console.log(response)
