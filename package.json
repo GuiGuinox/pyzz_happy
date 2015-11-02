@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "body-parser": "^1.14.1",
+    "circuit-breaker-js": "git+https://github.com/yammer/circuit-breaker-js.git",
     "ejs": "2.3.3",
     "express": "4.13.3",
     "redis": "^2.3.0",

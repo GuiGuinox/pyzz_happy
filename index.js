@@ -3,7 +3,8 @@ var request = require('request');
 var bodyParser = require('body-parser');
 var redis = require('redis');
 var client = redis.createClient();
-// var client = redis.createClient(port, 6379);
+// var client = redis.createClient(6379, host);
+var circuitBreaker = require('circuit-breaker-js');
 var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
@@ -22,24 +23,20 @@ client.on('error', function(err) {
 
 app.get('/', function(req, resp) {
 
-  request.get({url:'http://pizzapi.herokuapp.com/pizzas', timeout:4000}, function(error, response, body) {
+  var timeout = setTimeout(function() {
+    client.end();
+    resp.render('pages/error');
+  }, 4000);
 
-    if (error) {
-      if (error.code === 'ETIMEDOUT') {
-        client.get('pizzas', function(err, reply) {
-          console.log(reply);
-          pizzas = JSON.parse(reply);
-          console.log(pizzas);
-          resp.render('pages/index', {pizzas: pizzas});
-        });
-      }
+  client.get('pizzas', function(err, reply) {
+    console.log(reply)
+    pizzas = JSON.parse(reply);
+    console.log(pizzas);
+    if (timeout) {
+      clearTimeout(timeout);
     }
 
-    if (!error && response.statusCode == 200) {
-      var pizzas = JSON.parse(body);
-      console.log(pizzas)
-      resp.render('pages/index', {pizzas: pizzas});
-    }
+    resp.render('pages/index', {pizzas: pizzas});
   });
 
 });
@@ -49,6 +46,10 @@ app.post('/doOrder', function(req, resp) {
   console.log(idval);
 
   request.post({url: 'http://pizzapi.herokuapp.com/orders', timeout:4000}, JSON.stringify({id: idval}), function(error, response, body) {
+    if (error) {
+      console.error(error);
+    }
+
     if (!error && response.statusCode == 200) {
       console.log('You did it');
       console.log(response)
