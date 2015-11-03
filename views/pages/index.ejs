@@ -55,7 +55,12 @@
 			<form action="/doOrder" method="post">
 				<div class=".col-md-4">
 					<input type="hidden" name="idPizza" id="idPizza" value="<%= pizzas[i].id%>"></input>
-					<input class="btn btn-default element" type="submit" value="<%= pizzas[i].name%>"></input>
+					<% if (maintenance) { %>
+					<input class="btn btn-default element" disabled type="submit" value="<%= pizzas[i].name%>"></input>
+
+					<%}else{%>
+					<input class="btn btn-default element" disabled="disabled" type="submit" value="<%= pizzas[i].name%>"></input>
+					<%}%>
 				</div>
 			</form>
 		<% } %>

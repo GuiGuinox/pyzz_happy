@@ -39,7 +39,7 @@ app.get('/', function(req, resp) {
       clearTimeout(timeout);
     }
 
-    resp.render('pages/index', {pizzas: pizzas});
+    resp.render('pages/index', {pizzas: pizzas, maintenance: maintenance});
   });
 
 });
@@ -59,9 +59,13 @@ app.post('/doOrder', function(req, resp) {
   console.log(idval);
 
   var command = function(success, failed) {
+    console.log('test');
     request.post({url: 'http://pizzapi.herokuapp.com/orders', timeout:4000}, JSON.stringify({id: idval}), function(error, response, body) {
       if (error) {
+        console.log(error);
         failed();
+        console.log('test2');
+
       }
 
       if (!error && response.statusCode == 200) {
@@ -69,9 +73,7 @@ app.post('/doOrder', function(req, resp) {
         console.log('You did it');
         console.log(response)
       }
-    })
-      .done(success())
-      .fail(failed());
+    });
   };
 
   var fallback = function() {
