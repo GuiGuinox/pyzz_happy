@@ -59,16 +59,17 @@ app.post('/doOrder', function(req, resp) {
   console.log(idval);
 
   var command = function(success, failed) {
-    console.log('test');
     request.post({url: 'http://pizzapi.herokuapp.com/orders', timeout:4000}, JSON.stringify({id: idval}), function(error, response, body) {
-      if (error) {
-        console.log(error);
+      if (error || response.statusCode === 503) {
+        console.log(body);
+        console.error(response.statusCode);
         failed();
         console.log('test2');
+        return;
 
       }
 
-      if (!error && response.statusCode == 200) {
+      if (!error && response.statusCode === 200) {
         success();
         console.log('You did it');
         console.log(response)
