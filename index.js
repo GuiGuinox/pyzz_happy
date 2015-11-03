@@ -14,7 +14,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(librato.middleware());
 
-librato.configure({email: 'guillaume.jourdain2@gmail.com', token: '05712dd8bde392901ff889a93da21dd73866a68b58a80ebda4587269c06bdf62'});
+librato.configure({email: 'guillaume.jourdain2@gmail.com', token: '05712dd8bde392901ff889a93da21dd73866a68b58a80ebda4587269c06bdf62'},
+{email: 'elsa.rousselbach@gmail.com', token: '4027901d9bbe05df3e4a955566b7bcfbbe7f4e33fa42c8f1765ea0b78e89dff3'});
 librato.start();
 
 app.set('port', (process.env.PORT || 5000));
@@ -36,9 +37,15 @@ app.get('/', function(req, resp) {
     resp.render('pages/error');
   }, 4000);
 
+  if (circuitBreaker.isOpen()) {
+    librato.measure('circuitBreaker', 1);
+  }else {
+    librato.measure('circuitBreaker', 0);
+  }
+
   maintenance = circuitBreaker.isOpen();
   client.get('pizzas', function(err, reply) {
-    console.log(reply)
+
     pizzas = JSON.parse(reply);
     console.log(pizzas);
     if (timeout) {
@@ -52,13 +59,11 @@ app.get('/', function(req, resp) {
 
 circuitBreaker.onCircuitOpen = function(metrics) {
   maintenance = true;
-  liberato.measure('circuitBreaker', 1);
   console.log('open ' + maintenance);
 }
 
 circuitBreaker.onCircuitClose = function(metrics) {
   maintenance = false;
-  liberato.measure('circuitBreaker', 0);
   console.log('close ' + maintenance);
 }
 
@@ -70,11 +75,8 @@ app.post('/doOrder', function(req, resp) {
   var command = function(success, failed) {
     console.log('COMMAND')
     request.post({url: 'http://pizzapi.herokuapp.com/orders', timeout: 4000, body: JSON.stringify({id: idval})}, function(error, response, body) {
-      console.log(response);
+
       if (error || response.statusCode === 503) {
-        librato.measure('statusCode', response.statusCode);
-        console.log(body);
-        console.error(response.statusCode);
         failed();
         console.log('test2');
         return resp.render('pages/error');
@@ -84,7 +86,6 @@ app.post('/doOrder', function(req, resp) {
         librato.measure('statusCode', response.statusCode);
         success();
         console.log('You did it');
-        console.log(response)
         return resp.redirect('/');
 
       }
