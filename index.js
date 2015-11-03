@@ -3,6 +3,7 @@ var request = require('request');
 var bodyParser = require('body-parser');
 var redis = require('redis');
 var client = redis.createClient();
+var librato = require('librato-node');
 
 // var client = redis.createClient(6379, host);
 var CB = require('circuit-breaker-js');
@@ -11,6 +12,10 @@ var app = express();
 var maintenance = false;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
+app.use(librato.middleware());
+
+librato.configure({email: 'guillaume.jourdain2@gmail.com', token: '05712dd8bde392901ff889a93da21dd73866a68b58a80ebda4587269c06bdf62'});
+librato.start();
 
 app.set('port', (process.env.PORT || 5000));
 
@@ -25,12 +30,13 @@ client.on('error', function(err) {
 });
 
 app.get('/', function(req, resp) {
-
+  librato.increment('listPizza');
   var timeout = setTimeout(function() {
     client.end();
     resp.render('pages/error');
   }, 4000);
 
+  maintenance = circuitBreaker.isOpen();
   client.get('pizzas', function(err, reply) {
     console.log(reply)
     pizzas = JSON.parse(reply);
@@ -46,39 +52,47 @@ app.get('/', function(req, resp) {
 
 circuitBreaker.onCircuitOpen = function(metrics) {
   maintenance = true;
+  liberato.measure('circuitBreaker', 1);
   console.log('open ' + maintenance);
 }
 
 circuitBreaker.onCircuitClose = function(metrics) {
   maintenance = false;
+  liberato.measure('circuitBreaker', 0);
   console.log('close ' + maintenance);
 }
 
 app.post('/doOrder', function(req, resp) {
-  var idval = req.body.idPizza;
+  librato.increment('doOrders');
+  var idval = parseInt(req.body.idPizza);
   console.log(idval);
 
   var command = function(success, failed) {
-    request.post({url: 'http://pizzapi.herokuapp.com/orders', timeout:4000}, JSON.stringify({id: idval}), function(error, response, body) {
+    console.log('COMMAND')
+    request.post({url: 'http://pizzapi.herokuapp.com/orders', timeout: 4000, body: JSON.stringify({id: idval})}, function(error, response, body) {
+      console.log(response);
       if (error || response.statusCode === 503) {
+        librato.measure('statusCode', response.statusCode);
         console.log(body);
         console.error(response.statusCode);
         failed();
         console.log('test2');
-        return;
-
+        return resp.render('pages/error');
       }
 
-      if (!error && response.statusCode === 200) {
+      else {
+        librato.measure('statusCode', response.statusCode);
         success();
         console.log('You did it');
         console.log(response)
+        return resp.redirect('/');
+
       }
     });
   };
 
   var fallback = function() {
-    alert('Service is down');
+    console.log('truc');
   };
 
   circuitBreaker.run(command, fallback);
