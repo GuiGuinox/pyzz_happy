@@ -2,8 +2,8 @@ var express = require('express');
 var request = require('request');
 var bodyParser = require('body-parser');
 var redis = require('redis');
-//var client = redis.createClient();
-var client = redis.createClient(6379,'10.0.2.15', {no_ready_check: true});
+var client = redis.createClient();
+//var client = redis.createClient(6379,'10.0.2.15', {no_ready_check: true});
 var CB = require('circuit-breaker-js');
 var librato = require('librato-node');
 var circuitBreaker = new CB();
@@ -12,7 +12,6 @@ var maintenance = false;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(librato.middleware());
-
 
 app.set('port', (process.env.PORT || 5000));
 app.use(express.static(__dirname + '/public'));
@@ -38,9 +37,15 @@ app.get('/', function(req, resp) {
     resp.render('pages/error');
   }, 4000);
 
+  if (circuitBreaker.isOpen()) {
+    librato.measure('circuitBreaker', 1);
+  }else {
+    librato.measure('circuitBreaker', 0);
+  }
+
   maintenance = circuitBreaker.isOpen();
   client.get('pizzas', function(err, reply) {
-    console.log(reply)
+
     pizzas = JSON.parse(reply);
     console.log(pizzas);
     if (timeout) {
@@ -54,13 +59,11 @@ app.get('/', function(req, resp) {
 
 circuitBreaker.onCircuitOpen = function(metrics) {
   maintenance = true;
-  liberato.measure('circuitBreaker', 1);
   console.log('open ' + maintenance);
 }
 
 circuitBreaker.onCircuitClose = function(metrics) {
   maintenance = false;
-  liberato.measure('circuitBreaker', 0);
   console.log('close ' + maintenance);
 }
 
@@ -72,11 +75,8 @@ app.post('/doOrder', function(req, resp) {
   var command = function(success, failed) {
     console.log('COMMAND')
     request.post({url: 'http://pizzapi.herokuapp.com/orders', timeout: 4000, body: JSON.stringify({id: idval})}, function(error, response, body) {
-      console.log(response);
+
       if (error || response.statusCode === 503) {
-        librato.measure('statusCode', response.statusCode);
-        console.log(body);
-        console.error(response.statusCode);
         failed();
         console.log('test2');
         return resp.render('pages/error');
@@ -86,7 +86,6 @@ app.post('/doOrder', function(req, resp) {
         librato.measure('statusCode', response.statusCode);
         success();
         console.log('You did it');
-        console.log(response)
         return resp.redirect('/');
 
       }
