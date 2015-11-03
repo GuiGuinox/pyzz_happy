@@ -3,9 +3,10 @@ var request = require('request');
 var bodyParser = require('body-parser');
 var redis = require('redis');
 var client = redis.createClient();
+
+// var client = redis.createClient(6379, host);
 var CB = require('circuit-breaker-js');
 var circuitBreaker = new CB();
-
 var app = express();
 var maintenance = false;
 app.use(bodyParser.json());
