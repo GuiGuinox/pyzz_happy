@@ -3,8 +3,11 @@ var request = require('request');
 var bodyParser = require('body-parser');
 var redis = require('redis');
 var client = redis.createClient();
-var circuitBreaker = require('circuit-breaker-js');
+var CB = require('circuit-breaker-js');
+var circuitBreaker = new CB();
+
 var app = express();
+var maintenance = false;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
@@ -40,20 +43,41 @@ app.get('/', function(req, resp) {
 
 });
 
+circuitBreaker.onCircuitOpen = function(metrics) {
+  maintenance = true;
+  console.log('open ' + maintenance);
+}
+
+circuitBreaker.onCircuitClose = function(metrics) {
+  maintenance = false;
+  console.log('close ' + maintenance);
+}
+
 app.post('/doOrder', function(req, resp) {
   var idval = req.body.idPizza;
   console.log(idval);
 
-  request.post({url: 'http://pizzapi.herokuapp.com/orders', timeout:4000}, JSON.stringify({id: idval}), function(error, response, body) {
-    if (error) {
-      console.error(error);
-    }
+  var command = function(success, failed) {
+    request.post({url: 'http://pizzapi.herokuapp.com/orders', timeout:4000}, JSON.stringify({id: idval}), function(error, response, body) {
+      if (error) {
+        failed();
+      }
 
-    if (!error && response.statusCode == 200) {
-      console.log('You did it');
-      console.log(response)
-    }
-  });
+      if (!error && response.statusCode == 200) {
+        success();
+        console.log('You did it');
+        console.log(response)
+      }
+    })
+      .done(success())
+      .fail(failed());
+  };
+
+  var fallback = function() {
+    alert('Service is down');
+  };
+
+  circuitBreaker.run(command, fallback);
 
 });
 
