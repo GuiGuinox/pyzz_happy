@@ -2,10 +2,11 @@ var express = require('express');
 var request = require('request');
 var bodyParser = require('body-parser');
 var redis = require('redis');
-var client = redis.createClient();
+//var client = redis.createClient();
+var client = redis.createClient(6379,'10.0.2.15', {no_ready_check: true});
 
-// var client = redis.createClient(6379, host);
 var CB = require('circuit-breaker-js');
+var librato = require('librato-node');
 var circuitBreaker = new CB();
 var app = express();
 var maintenance = false;
@@ -13,8 +14,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
 app.set('port', (process.env.PORT || 5000));
-
 app.use(express.static(__dirname + '/public'));
+
+//init librato
+librato.configure({email: 'elsa.rousselbach@gmail.com', token: '4027901d9bbe05df3e4a955566b7bcfbbe7f4e33fa42c8f1765ea0b78e89dff3'});
+librato.start();
 
 // views is directory for all template files
 app.set('views', __dirname + '/views');

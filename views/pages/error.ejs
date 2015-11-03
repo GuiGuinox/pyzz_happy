@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <% include ../partials/header.ejs %>
-</head>
+	<head>
+		<% include ../partials/header.ejs %>
+	</head>
 
-<body>
-  <% include ../partials/nav.ejs %>
-  <img src="/pizza-error.jpg">
-  Looks like there's an error , don't worry you will soon be able to order your Pizza .
-
-</body>
+	<body>
+		<% include ../partials/nav.ejs %>
+		<div class="col-md-8 col-md-offset-2 error">
+			<img src="/pizza-error.jpg" class="img-rounded" width="50%">
+			<p class="error"> Looks like there's an error , don't worry you will soon be able to order your Pizza.</p>
+		</div>
+	</body>
 </html>
