@@ -27,3 +27,10 @@
 .element{
   margin: 10px;
 }
+.error{
+  color: red;
+  font-weight: bold;
+  font-size: 12px;
+  vertical-align: middle;
+  text-align: center;
+}

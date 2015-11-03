@@ -50,16 +50,25 @@
 		Please do work through the Getting Started guide, even if you do know how to build such an application.  The guide covers the basics of working with Heroku, and will familiarize you with all the concepts you need in order to build and deploy your own apps.
 	</div>
 </div> -->
+	<h1>Pizza à domicile<small> carte </small></h1>
 	<div class="row element">
 		<% for(var i=0; i< pizzas.length; i++ ){ %>
 			<form action="/doOrder" method="post">
-				<div class=".col-md-4">
-					<input type="hidden" name="idPizza" id="idPizza" value="<%= pizzas[i].id%>"></input>
+					<input type="hidden" name="idPizza" id="idPizza" value="Commander"></input>
 					<% if (maintenance) { %>
-					<input class="btn btn-default element" disabled type="submit" value="<%= pizzas[i].name%>"></input>
-
+						<div class=".col-md-4">
+							<p class="lead"><%= pizzas[i].id%></p>
+						</div>
+						<div class=".col-md-4">
+							<input class="btn btn-default element" disabled type="submit" value="Commander"></input>
+						</div>
 					<%}else{%>
-					<input class="btn btn-default element" type="submit" value="<%= pizzas[i].name%>"></input>
+						<div class=".col-md-4">
+							<p class="lead"><s><%= pizzas[i].id%></s></p>
+						</div>
+						<div class=".col-md-4">
+							<input class="btn btn-default element" disabled="disabled" type="submit" value="Commander"></input>
+						</div>
 					<%}%>
 				</div>
 			</form>
